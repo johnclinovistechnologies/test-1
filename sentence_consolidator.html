@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sentence Consolidator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f5f2eb;
+    --surface: #fffef9;
+    --border: #d6cebc;
+    --accent: #1a4a3a;
+    --accent-light: #2d7a5f;
+    --accent-pale: #e8f2ee;
+    --text: #1c1c1c;
+    --muted: #7a7060;
+    --tag-a: #2d4a7a;
+    --tag-a-bg: #e8eef7;
+    --tag-b: #7a2d2d;
+    --tag-b-bg: #f7e8e8;
+    --tag-both: #3a6a2a;
+    --tag-both-bg: #eaf2e8;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  header {
+    background: var(--accent);
+    color: #fff;
+    padding: 28px 40px 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+  }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  header p {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  .badge {
+    background: var(--accent-light);
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 36px 24px 0;
+  }
+
+  .inputs-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 700px) {
+    .inputs-row { grid-template-columns: 1fr; }
+    header { padding: 20px; }
+    header h1 { font-size: 1.5rem; }
+  }
+
+  .list-panel {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .list-panel-header {
+    padding: 14px 18px 12px;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .list-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 4px;
+  }
+
+  .list-label.a { background: var(--tag-a-bg); color: var(--tag-a); }
+  .list-label.b { background: var(--tag-b-bg); color: var(--tag-b); }
+
+  .list-panel-header span {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 16px 18px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea::placeholder { color: #b0a898; }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 11px 26px;
+    border-radius: 7px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent-light); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26,74,58,0.25); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  .result-section {
+    display: none;
+  }
+  .result-section.visible { display: block; }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .result-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  .legend {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+  .legend-dot.a { background: var(--tag-a); }
+  .legend-dot.b { background: var(--tag-b); }
+  .legend-dot.both { background: var(--tag-both); }
+
+  .result-list {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+
+  .result-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    animation: slideIn 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-item:last-child { border-bottom: none; }
+  .result-item:hover { background: var(--accent-pale); }
+
+  .item-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    min-width: 22px;
+    padding-top: 2px;
+  }
+
+  .item-text {
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--text);
+  }
+
+  .source-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .source-tag.a { background: var(--tag-a-bg); color: var(--tag-a); }
+  .source-tag.b { background: var(--tag-b-bg); color: var(--tag-b); }
+  .source-tag.both { background: var(--tag-both-bg); color: var(--tag-both); }
+
+  .copy-row {
+    margin-top: 18px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .info-box {
+    background: var(--accent-pale);
+    border: 1.5px solid #b8d8cc;
+    border-radius: 8px;
+    padding: 13px 18px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  .copied-msg {
+    font-size: 0.78rem;
+    color: var(--accent-light);
+    align-self: center;
+    display: none;
+  }
+  .copied-msg.show { display: inline; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="badge">Clinical / Research Tool</div>
+    <h1>Sentence Consolidator</h1>
+    <p>Identifies and merges the most detailed version of each unique statement from two lists</p>
+  </div>
+</header>
+
+<div class="main">
+
+  <div class="info-box">
+    ✦ Enter one sentence per line in each list. The tool finds semantically similar sentences and keeps the <strong>most detailed version</strong> — without rewriting or paraphrasing anything.
+  </div>
+
+  <div class="inputs-row">
+    <div class="list-panel">
+      <div class="list-panel-header">
+        <span class="list-label a">List A</span>
+        <span>Paste your first list here</span>
+      </div>
+      <textarea id="listA" placeholder="The patient has a WHO performance status ≤ 2&#10;The patient's breast cancer must be negative for HER2 over-expression by IHC (IHC score ≤1+) or for HER2 gene amplification by FISH or CISH or SISH&#10;Disease progression of locally advanced or metastatic breast cancer"></textarea>
+    </div>
+    <div class="list-panel">
+      <div class="list-panel-header">
+        <span class="list-label b">List B</span>
+        <span>Paste your second list here</span>
+      </div>
+      <textarea id="listB" placeholder="The patient has a WHO performance status ≤ 2 by RECIST criteria version 1.1.&#10;The patient's breast cancer must be negative for HER2 over-expression by IHC&#10;Disease progression of locally advanced or metastatic breast cancer"></textarea>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" onclick="consolidate()">▶ Consolidate Lists</button>
+    <button class="btn btn-secondary" onclick="clearAll()">✕ Clear All</button>
+    <button class="btn btn-secondary" onclick="loadExample()">↺ Load Example</button>
+  </div>
+
+  <div class="result-section" id="resultSection">
+    <div class="result-header">
+      <div class="result-title">Consolidated List</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot a"></div>From List A (more detailed)</div>
+        <div class="legend-item"><div class="legend-dot b"></div>From List B (more detailed)</div>
+        <div class="legend-item"><div class="legend-dot both"></div>Identical / unique</div>
+      </div>
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="result-list" id="resultList"></div>
+
+    <div class="copy-row">
+      <button class="btn btn-primary" onclick="copyResult()">⎘ Copy Consolidated List</button>
+      <span class="copied-msg" id="copiedMsg">✓ Copied to clipboard!</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── helpers ──────────────────────────────────────────────────────────────────
+
+function tokenize(str) {
+  return str.toLowerCase().replace(/[^\w\s≤≥α-ωΑ-Ω]/g, ' ').split(/\s+/).filter(Boolean);
+}
+
+function jaccardSimilarity(a, b) {
+  const sa = new Set(tokenize(a));
+  const sb = new Set(tokenize(b));
+  let inter = 0;
+  for (const t of sa) if (sb.has(t)) inter++;
+  const union = sa.size + sb.size - inter;
+  return union === 0 ? 1 : inter / union;
+}
+
+// Check if one string is a substring (normalised) of another
+function isSubstringOf(shorter, longer) {
+  const norm = s => s.toLowerCase().replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '');
+  return norm(longer).includes(norm(shorter));
+}
+
+function parseLines(text) {
+  return text.split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+}
+
+// ── main ─────────────────────────────────────────────────────────────────────
+
+function consolidate() {
+  const rawA = document.getElementById('listA').value;
+  const rawB = document.getElementById('listB').value;
+
+  const linesA = parseLines(rawA);
+  const linesB = parseLines(rawB);
+
+  if (linesA.length === 0 && linesB.length === 0) {
+    alert('Please enter at least one sentence in a list.');
+    return;
+  }
+
+  const THRESHOLD = 0.35; // Jaccard threshold to consider two sentences "about the same thing"
+
+  const consolidated = []; // { text, source }
+  const usedB = new Set();
+
+  // For each sentence in A, find best match in B
+  for (const sentA of linesA) {
+    let bestScore = 0;
+    let bestIdx = -1;
+
+    linesB.forEach((sentB, i) => {
+      if (usedB.has(i)) return;
+      const score = jaccardSimilarity(sentA, sentB);
+      if (score > bestScore) { bestScore = score; bestIdx = i; }
+    });
+
+    if (bestScore >= THRESHOLD && bestIdx !== -1) {
+      const sentB = linesB[bestIdx];
+      usedB.add(bestIdx);
+
+      // Pick the more detailed (longer / superset) version
+      if (isSubstringOf(sentA, sentB)) {
+        // B contains A → B is more detailed
+        consolidated.push({ text: ensurePeriod(sentB), source: 'b' });
+      } else if (isSubstringOf(sentB, sentA)) {
+        // A contains B → A is more detailed
+        consolidated.push({ text: ensurePeriod(sentA), source: 'a' });
+      } else {
+        // Neither is a substring; pick longer one
+        const winner = sentA.length >= sentB.length ? sentA : sentB;
+        const src = sentA.length >= sentB.length ? 'a' : 'b';
+        consolidated.push({ text: ensurePeriod(winner), source: src });
+      }
+    } else {
+      // No match in B → unique to A
+      consolidated.push({ text: ensurePeriod(sentA), source: 'both' });
+    }
+  }
+
+  // Add remaining B sentences that didn't match anything in A
+  linesB.forEach((sentB, i) => {
+    if (!usedB.has(i)) {
+      consolidated.push({ text: ensurePeriod(sentB), source: 'both' });
+    }
+  });
+
+  renderResult(consolidated, linesA.length, linesB.length);
+}
+
+function ensurePeriod(s) {
+  const trimmed = s.trimEnd();
+  if (/[.!?]$/.test(trimmed)) return trimmed;
+  return trimmed + '.';
+}
+
+function renderResult(items, countA, countB) {
+  const section = document.getElementById('resultSection');
+  const list = document.getElementById('resultList');
+  const stats = document.getElementById('statsBar');
+
+  list.innerHTML = '';
+
+  items.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'result-item';
+    div.style.animationDelay = (idx * 0.05) + 's';
+
+    const tagLabel = item.source === 'a' ? 'LIST A' : item.source === 'b' ? 'LIST B' : 'COMMON';
+    const tagClass = item.source;
+
+    div.innerHTML = `
+      <span class="item-num">${idx + 1}.</span>
+      <span class="item-text">${escHtml(item.text)}</span>
+      <span class="source-tag ${tagClass}">${tagLabel}</span>
+    `;
+    list.appendChild(div);
+  });
+
+  const fromA = items.filter(i => i.source === 'a').length;
+  const fromB = items.filter(i => i.source === 'b').length;
+  const common = items.filter(i => i.source === 'both').length;
+
+  stats.innerHTML = `
+    <div class="stat"><span class="stat-num">${items.length}</span><span class="stat-label">Total Statements</span></div>
+    <div class="stat"><span class="stat-num">${countA}</span><span class="stat-label">In List A</span></div>
+    <div class="stat"><span class="stat-num">${countB}</span><span class="stat-label">In List B</span></div>
+    <div class="stat"><span class="stat-num">${fromA}</span><span class="stat-label">A More Detailed</span></div>
+    <div class="stat"><span class="stat-num">${fromB}</span><span class="stat-label">B More Detailed</span></div>
+    <div class="stat"><span class="stat-num">${common}</span><span class="stat-label">Identical / Unique</span></div>
+  `;
+
+  section.classList.add('visible');
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function copyResult() {
+  const items = document.querySelectorAll('.item-text');
+  const text = Array.from(items).map((el, i) => `${i+1}. ${el.textContent}`).join('\n');
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById('copiedMsg');
+    msg.classList.add('show');
+    setTimeout(() => msg.classList.remove('show'), 2500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('listA').value = '';
+  document.getElementById('listB').value = '';
+  document.getElementById('resultSection').classList.remove('visible');
+}
+
+function loadExample() {
+  document.getElementById('listA').value =
+`The patient has a WHO performance status ≤ 2
+The patient's breast cancer must be negative for HER2 over-expression by IHC (IHC score ≤1+) or for HER2 gene amplification by FISH or CISH or SISH
+Disease progression of locally advanced or metastatic breast cancer`;
+
+  document.getElementById('listB').value =
+`The patient has a WHO performance status ≤ 2 by RECIST criteria version 1.1.
+The patient's breast cancer must be negative for HER2 over-expression by IHC
+Disease progression of locally advanced or metastatic breast cancer`;
+}
+</script>
+</body>
+</html>
